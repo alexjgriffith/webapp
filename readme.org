@@ -1,0 +1,80 @@
+* Web Tech for www.alexjgriffith.com
+- outwards facing server :: nginx
+- internal server :: nodejs v4.5
+- Acceptable Document Formats :: org, md
+- md to html :: redcarpet or strapdown
+- org to html :: org.js
+- CA certificate :: letsencrypt
+- Sample port :: 8000 
+- Local Env :: docker 1.9.1
+
+* Docker Start
+#+BEGIN_SRC bash
+# Docker Version 1.9.1 for darwin/amd64 -> linux/amd64
+# Assuming you have already created a machine called default
+# mine used virtualbox and allocs 1G ram
+docker-machine start default
+eval $(docker-machine env default)
+# see what is running
+docker ps
+# list all containers on default
+docker ps -a
+# remove all conrainer on defalt
+# docker rm `docker ps -aq`
+
+docker build -t alexjgriffith/webapp .
+docker run -p 8000:8090 -v $HOME/Development/alexjgriffith/:/usr/src/app --name test -d alexjgriffith/webapp 
+
+# run in an interactive mode
+# docker run -p 8000:8090 -v $HOME/Development/alexjgriffith/:/usr/src/app --name test -ti --rm alexjgriffith/webapp 
+
+docker stop test ; docker rm test
+## find DOCKER_HOST by running docker-machine env default
+
+#+END_SRC 
+
+** Dockerfile
+
+Note that for nodeamon to working inside of node container it requires the Legacy `-L` flag to be set. This can kill performance on larger files.
+
+#+BEGIN_SRC dockerfile
+FROM node:argon
+
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+RUN npm install nodemon -g
+
+COPY package.json /usr/src/app
+
+RUN npm install
+
+EXPOSE 8090
+
+CMD ["nodemon","-L","./server.js"]
+#+END_SRC
+
+* Server Info
+Basic nodejs setup to host files in the root directory
+#+BEGIN_SRC javascript
+var express = require('express');
+var app = express();
+var server = require('http').createServer(app);
+var PORT =8080;
+server.listen(PORT);
+app.get("/",function(req,res){
+    console.log(req.url);
+    res.sendFile(__dirname + url.parse(req.url, true).pathname);
+});
+// Hosts supporting material from shared
+// <a src="/shared/img/test.svg>Test Image<a/>"
+app.use("/shared",express.static(__dirname+"/shared/"));
+#+END_SRC
+
+Sample setup to view the info at alexjgriffith.com:8000/ .
+#+BEGIN_SRC bash
+ssh -R 8000:127.0.0.1:8000  griffita@107.170.127.8
+#+END_SRC
+
+
+#+OPTIONS: toc:nil html-postamble:nil num:nil
