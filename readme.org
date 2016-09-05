@@ -1,4 +1,7 @@
-* Web Tech for www.alexjgriffith.com
+#+OPTIONS: toc:nil html-postamble:nil num:nil
+
+
+* WEB TECH for www.alexjgriffith.com
 - outwards facing server :: nginx
 - internal server :: nodejs v4.5
 - Acceptable Document Formats :: org, md
@@ -7,6 +10,21 @@
 - CA certificate :: letsencrypt
 - Sample port :: 8000 
 - Local Env :: docker 1.9.1
+
+* File Storage
+Documents and images will be stored as objects in an object fs (swift or ceph currently undecided) and references to those objects will be present in the postgres db.
+
+#+BEGIN_SRC bash
+# docker rm `docker ps -aq`
+docker run -v /srv --name SWIFT_DATA busybox
+# ls /var/lib/docker/volumes
+docker run -p 8080:8080 -d -e SWIFT_SET_PASSWORDS=yes -e SWIFT_STORAGE_URL_SCHEME=https --volumes-from SWIFT_DATA --name SWIFT -t serverascode/swift-onlyone
+
+docker run -d --link SWIFT:SWIFT -p 443:443 -t serverascode/pound
+
+
+
+#+END_SRC
 
 * Docker Start
 #+BEGIN_SRC bash
@@ -23,7 +41,7 @@ docker ps -a
 # docker rm `docker ps -aq`
 
 docker build -t alexjgriffith/webapp .
-docker run -p 8000:8090 -v $HOME/Development/alexjgriffith/:/usr/src/app --name test -d alexjgriffith/webapp 
+docker run -p 8000:8090 -v $HOME/Development/alexjgriffith/app:/usr/src/app --name test -d alexjgriffith/webapp 
 
 # run in an interactive mode
 # docker run -p 8000:8090 -v $HOME/Development/alexjgriffith/:/usr/src/app --name test -ti --rm alexjgriffith/webapp 
@@ -77,4 +95,63 @@ ssh -R 8000:127.0.0.1:8000  griffita@107.170.127.8
 #+END_SRC
 
 
-#+OPTIONS: toc:nil html-postamble:nil num:nil
+
+
+* Postgres setup
+#+BEGIN_SRC bash
+
+psql -h 192.168.99.100 -p 5432 -U webapp -f init.sql
+# -H "Content-Type: application/json"
+curl  -H "Content-Type: application/json" -X POST -d '{"name":"griffita","text":"nothing","complete":"false"}' 192.168.99.100:8090/api/items
+#+END_SRC
+* Install the lastest EMACS on server
+
+#+BEGIN_SRC bash
+sudo apt-add-repository ppa:ubuntu-elisp/ppa
+
+sudo apt-get update
+sudo apt-get install emacs-snapshot
+#+END_SRC
+
+minimal .emacs.d/init.el file
+
+#+BEGIN_SRC elisp
+;; Add packages
+(setq package-list '(package1 package2))
+(require 'package)
+(dolist (source '(("melpa-stable" . "http://melpa-stable.milkbox.net/packages/")
+		  ("marmalade" . "http://marmalade-repo.org/packages/")
+		  ("melpa" . "https://melpa.org/packages/")
+                  ))
+  (add-to-list 'package-archives source t))
+
+(defun ensure-package-installed (&rest packages)
+  "Assure every package is installed, ask for installation if it’s not.
+Return a list of installed packages or nil for every skipped package."
+  (mapcar
+   (lambda (package)
+     ;; (package-installed-p 'evil)
+     (if (package-installed-p package)
+         nil
+       (if (y-or-n-p (format "Package %s is missing. Install it? " package))
+           (package-install package)
+         package)))
+   packages))
+
+
+(ensure-package-installed 'color-theme 'noctilux 'company 'smart-mode-line 'paren)
+;; make sure to have downloaded archive description.
+;; Or use package-archive-contents as suggested by Nicolas Dudebout
+(or (file-exists-p package-user-dir)
+    (package-refresh-contents))
+
+
+(package-initialize)
+
+(setq inhibit-startup-message t)
+(show-paren-mode t)
+
+#+END_SRC
+
+
+* Setup Emacs Email

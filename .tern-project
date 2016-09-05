@@ -1,0 +1,12 @@
+{
+  "libs": [
+    "pg",
+    "pg-promise",
+    "express",
+    "http",
+    "url"
+  ],
+  "plugins": {
+    "node": {}
+  }
+ }

@@ -5,11 +5,13 @@
     "author": "Alexander Griffith <griffitaj@gmail.com>",
     "main": "server.js",
     "scripts": {
-	"start":"nodemon server.js"
+	"start":"nodemon -L app/server.js"
     },
-    "dependencies":{
-	"express" : "^4.14.0",
-	"http" :"*",
-	"url":"^0.11.0"
+  "dependencies":{
+    "bluebird":"*",
+    "pg-promise":"^3.2.3",
+    "express" : "^4.14.0",
+    "http" :"*",
+    "body":"*"    
     }
 }

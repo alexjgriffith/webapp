@@ -1,17 +1,14 @@
 FROM node:argon
 
-RUN mkdir -p /usr/src/app
-WORKDIR /usr/src/app
-
 RUN npm install nodemon -g
 
-COPY package.json /usr/src/app
+WORKDIR /usr/src
 
+COPY app/package.json /usr/src/package.json
 RUN npm install
+ADD app/nodemon.json /usr/src/nodeomn.json
 
-
-#COPY . /usr/src/app
 
 EXPOSE 8090
 
-CMD ["nodemon","-L","./server.js"]
+CMD npm start

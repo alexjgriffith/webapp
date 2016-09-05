@@ -1,0 +1,31 @@
+content:
+  image: busybox:latest
+  volumes:
+    - /var/lib/postgresql
+  container_name: content
+  
+db:
+ image: postgres
+ volumes_from:
+  - content
+ environment:
+  - DATABASE_URL=webapp://localhost:5432/webapp
+  - POSTGRES_PASSWORD=password
+  - POSTGRES_USER=webapp
+  - POSTGRES_DB=webapp
+  - NODE_PATH=/usr/src/node_modules
+ ports:
+  - 5432:5432
+  
+myapp:
+ build: .
+ volumes:
+  - ./app/:/usr/src/app/
+ ports:
+  - 8090:8090
+ links:
+  - db
+ environment:
+   - PGHOST=db
+   - PGDATABASE=postgres
+   - PGUSER=postgres
